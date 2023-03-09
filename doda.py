@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 #import boto3
 
 from bs4 import BeautifulSoup
@@ -158,8 +157,13 @@ for i in range(2,total_page_num):
 
 
 url_list_002 = list()
+'''
 a=100
 joblib_num = total_page_num//a + 1
+
+'''
+a=1#テスト用
+joblib_num=10 #テスト用
 
 for n in tqdm(range(0, joblib_num)):
     try:
@@ -182,9 +186,15 @@ for i in flatten_url_list_002:
 
 
 url_list_004 = list()
+'''
 a=100
+'''
+a=1#テスト用
 
+'''
 for n in tqdm(range(len(url_list_003))):
+'''
+for n in tqdm(range(100)):#テスト用
     try:
         resultList = joblib.Parallel(n_jobs=12, verbose=3)( [joblib.delayed(joblib_get_url_second)(i) for i in range(n*a,(n+1)*a) ])
         url_list_004.extend(resultList)
@@ -203,12 +213,17 @@ for i in flatten_url_list_004:
   if i not in url_list_004:
       url_list_005.append(i)
 
+'''
 b=100
 joblib_num=len(url_list_004)//b+1
 
+'''
+b=1#テスト用
+joblib_num=100#テスト用
+
 all_list=list()
 
-for n in tqdm(range(0,joblib_num)):#変更点
+for n in tqdm(range(0,joblib_num)):
     try:
         resultList = joblib.Parallel(n_jobs=12, verbose=3)( [joblib.delayed(joblib_get_data)(i) for i in range(n*b,(n+1)*b) ])
         #resultList = joblib.Parallel(n_jobs=12, verbose=3)( [joblib.delayed(joblib_get_data)(i) ])
@@ -222,7 +237,7 @@ all_list_filtered=[x for x in all_list if x is not None]
 doda_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","支店住所","従業員数","業種","職種","雇用形態"])
 print(doda_df)
 
-doda_df.to_csv("doda_data.csv",encoding="utf-8-sig")
+doda_df.to_csv("doda_data_test_100.csv",encoding="utf-8-sig")
 
 
 '''
