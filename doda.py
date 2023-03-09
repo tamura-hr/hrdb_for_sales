@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 #import boto3
+
 from bs4 import BeautifulSoup
 import requests
 import joblib
