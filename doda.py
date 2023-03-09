@@ -9,8 +9,6 @@ import joblib
 from tqdm import tqdm
 import pandas as pd
 
-
-
 def joblib_get_url(i):
   #iにはページ数
   url_list_pre=list()
