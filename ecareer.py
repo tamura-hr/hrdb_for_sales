@@ -4,6 +4,8 @@ import joblib
 from tqdm import tqdm
 import pandas as pd
 
+#ecareer
+
 def joblib_get_url(i):
     url_list_pre=list()
     url=url_list_001[i]
