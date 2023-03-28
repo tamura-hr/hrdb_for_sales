@@ -1,2 +1,1 @@
 #https://next.rikunabi.com/
-
