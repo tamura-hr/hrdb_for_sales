@@ -55,9 +55,9 @@ def joblib_get_data(i):
     for i in range(0,10):
         try:
             juge=soup.find("div",class_="descArticleUnit dataWork").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
-            if '"雇用形態"' in juge:
+            if '雇用形態' in juge:
                 raw_employee=soup.find("div",class_="descArticleUnit dataWork").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text()
-                employee=raw_employee.split()
+                employee=raw_employee.split("<br>")
         except:
             pass
     
@@ -67,7 +67,7 @@ def joblib_get_data(i):
             juge=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("th").get_text()
             if "従業員数" in juge:
                 raw_members=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("td").get_text()
-                members=raw_members.split()
+                members=raw_members
         except:
             pass
     #法人住所
@@ -91,7 +91,7 @@ def joblib_get_data(i):
 
     new_list.append(houjin[0])
     new_list.append(houjin_addr)
-    new_list.append(members[0])
+    new_list.append(members)
     new_list.append(Industry)
     new_list.append(job_type)
     new_list.append(employee[0])
