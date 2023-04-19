@@ -7,6 +7,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 def joblib_get_url(i):
   #iにはページ数
@@ -45,11 +46,14 @@ def joblib_get_url_second(i):
 def joblib_get_data(i):
   new_list=list()
   #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-  houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+  media=houjin=shiten=houjin_addr=shiten_addr=members=members_etc=Industry=job_type=employee=" "
 
   url=url_list_005[i]
   res=requests.get(url)
   soup=BeautifulSoup(res.text,"html.parser")
+
+  #媒体名
+  media="doda"
 
   #法人名
   try:
@@ -87,7 +91,18 @@ def joblib_get_data(i):
       judge=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("th").get_text()
       if "従業員数" in judge:
         raw_members=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("td").get_text()
-        members=raw_members.split()
+        raw_members=raw_members.replace(",","")
+        members=re.findall(r"\d+",raw_members)
+    except:
+      pass
+  
+  #従業員数補足情報
+  for i in range(10):
+    try:
+      judge=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("th").get_text()
+      if "従業員数" in judge:
+        raw_members_etc=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("td").get_text()
+        members_etc=raw_members_etc.split()
     except:
       pass
 
@@ -120,11 +135,12 @@ def joblib_get_data(i):
     except:
       pass 
 
-  
+  new_list.append(media)
   new_list.append(houjin[0])
   new_list.append(houjin_addr[0])
   new_list.append(shiten_addr[0])
   new_list.append(members[0])
+  new_list.append(members_etc[0])
   new_list.append(Industry[0])
   new_list.append(job_type[0])
   new_list.append(employee[0])
@@ -234,10 +250,8 @@ for n in tqdm(range(0,joblib_num)):
 all_list_filtered=[x for x in all_list if x is not None]
 
 
-doda_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","支店住所","従業員数","業種","職種","雇用形態"])
-print(doda_df)
-
-doda_df.to_csv("doda_data_test_100.csv",encoding="utf-8-sig")
+doda_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","法人住所","支店住所","従業員数","従業員数補足情報","業種","職種","雇用形態"])
+doda_df.to_csv("doda_data_test_100.csv",encoding="cp932",index=False)
 
 
 '''
