@@ -5,6 +5,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 def joblib_get_url(i):
     url_list_pre=list()
@@ -19,6 +20,7 @@ def joblib_get_url(i):
             elem=soup.find_all("div",class_="cassetteRecruit__bottom")[i].find("a")
             url_key=elem.attrs["href"]
             n_url_key=raw_url+url_key
+            n_url_key=n_url_key.replace("msg/","")
             url_list_pre.append(n_url_key)
         except:
             pass
@@ -26,10 +28,13 @@ def joblib_get_url(i):
 
 def joblib_get_data(i):
     new_list=list()
-    houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+    media=postcode=members_etc=houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
     url=url_list_003[i]
     res=requests.get(url)
     soup=BeautifulSoup(res.text,"html.parser")
+
+    #媒体名
+    media="mynavi"
 
     #法人名
     try:
@@ -56,14 +61,24 @@ def joblib_get_data(i):
                 employee=raw_employee.split()
         except:
             pass
-    
     #従業員数
     for i in range(0,10):
         try:
             juge=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("th").get_text()
             if "従業員数" in juge:
                 raw_members=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("td").find("div").get_text()
-                members=raw_members.split()
+                raw_members=raw_members.replace(",","")
+                members=re.findall(r"\d+",raw_members)
+        except:
+            pass
+        
+    #従業員数補足情報
+    for i in range(0,10):
+        try:
+            juge=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("th").get_text()
+            if "従業員数" in juge:
+                raw_members_etc=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("td").find("div").get_text()
+                members_etc=raw_members_etc.split()
         except:
             pass
     
@@ -77,6 +92,21 @@ def joblib_get_data(i):
         except:
             pass
 
+    #郵便番号
+    for i in range(10):
+      try:
+        juge=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("th").get_text()
+        if "所在地" in juge:
+            raw_postcode=soup.find("table",class_="jobOfferTable thL").find("tbody").find_all("tr")[i].find("td").find("div").get_text()
+            raw_postcode=raw_postcode.replace("-","")
+            raw_postcode=re.findall(r"\d+",raw_postcode)
+            
+            if len(raw_postcode[0]) == 7:
+                postcode=raw_postcode
+            else:
+                pass
+      except:
+        pass 
 
 
     #職種
@@ -89,9 +119,12 @@ def joblib_get_data(i):
         except:
             pass
 
+    new_list.append(media)
     new_list.append(houjin[0])
+    new_list.append(postcode[0])
     new_list.append(houjin_addr)
     new_list.append(members[0])
+    new_list.append(members_etc[0])
     new_list.append(Industry[0])
     new_list.append(job_type)
     new_list.append(employee[0])
@@ -162,6 +195,6 @@ all_list_filtered=[x for x in all_list if x[0] is not None]#法人名が取れ�
 
 
 
-mynavi_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","従業員数","業種","職種","雇用形態"])
-mynavi_df.to_csv("mynavi_data_test_100.csv",encoding="utf-8-sig")
+mynavi_df=pd.DataFrame(all_list_filtered,columns=["媒体目","法人名","郵便番号","法人住所","従業員数","従業員補足情報","業種","職種","雇用形態"])
+mynavi_df.to_csv("mynavi_data_test_100.csv",encoding="cp932",index=False)
 
