@@ -5,6 +5,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 def joblib_get_url(i):
     url_list_pre_2=list()
@@ -32,7 +33,9 @@ def joblib_get_data(i):
 
     new_list=list()
     #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-    houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+    members_etc=postcode=media=houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+
+    media="en-japan"
 
     #法人名
     try:
@@ -47,7 +50,7 @@ def joblib_get_data(i):
     try:
         selector="#globalPankuzu > ol > li:nth-of-type(2) > a > span"
         raw_Industry=soup.select_one(selector).get_text()
-        Industry=raw_Industry
+        Industry=raw_Industry.split()
     except:
         pass
 
@@ -56,27 +59,52 @@ def joblib_get_data(i):
         try:
             juge=soup.find("div",class_="descArticleUnit dataWork").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
             if '雇用形態' in juge:
-                raw_employee=soup.find("div",class_="descArticleUnit dataWork").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text()
-                employee=raw_employee.split("<br>")
+                raw_employee=soup.find("div",class_="descArticleUnit dataWork").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text("\n")
+                employee=raw_employee.split()
         except:
             pass
-    
+    #https://oyasuminase.hatenablog.com/entry/2020/01/13/043104
+    #参考になりそう
     #従業員数
     for i in range(0,10):
         try:
             juge=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("th").get_text()
             if "従業員数" in juge:
                 raw_members=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("td").get_text()
-                members=raw_members
+                raw_members=raw_members.replace(",","")
+                members=re.findall(r"\d+",raw_members)
+        except:
+            pass    
+    #従業員数補足情報
+    for i in range(0,10):
+        try:
+            juge=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("th").get_text()
+            if "従業員数" in juge:
+                raw_members_etc=soup.find("div",class_="descArticleArea descSubArticle").find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table",class_="dataTable").find("tbody").find_all("tr")[i].find("td").get_text()
+                members_etc=raw_members_etc.split()
         except:
             pass
+    #郵便番号
+    for i in range(0,10):
+        try:
+            juge=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
+            if "事業所" in juge:
+                raw_postcode=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text()
+                raw_postcode=raw_postcode.replace("-","")
+                raw_postcode=re.findall(r"\d+",raw_postcode)
+                if len(raw_postcode[0]) == 7:
+                    postcode=raw_postcode
+                else:
+                    pass
+        except:
+            pass    
     #法人住所
     for i in range(0,10):
         try:
             juge=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
             if "事業所" in juge:
                 raw_houjin_addr=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text()
-                houjin_addr=raw_houjin_addr
+                houjin_addr=raw_houjin_addr.split()
         except:
             pass
     #職種
@@ -85,15 +113,18 @@ def joblib_get_data(i):
             juge=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
             if "事業内容" in juge:
                 raw_job_type=soup.find("div",class_="descArticleUnit dataCompanyInfoSummary").find("div",class_="contents").find("table").find("tbody").find_all("tr")[i].find("td").get_text()
-                job_type=raw_job_type
+                job_type=raw_job_type.split()
         except:
             pass    
 
+    new_list.append(media)
     new_list.append(houjin[0])
-    new_list.append(houjin_addr)
-    new_list.append(members)
-    new_list.append(Industry)
-    new_list.append(job_type)
+    new_list.append(postcode[0])
+    new_list.append(houjin_addr[0])
+    new_list.append(members[0])
+    new_list.append(members_etc[0])
+    new_list.append(Industry[0])
+    new_list.append(job_type[0])
     new_list.append(employee[0])
 
     return new_list
@@ -163,5 +194,5 @@ for n in tqdm(range(0,joblib_num)):
         pass
 
 all_list_filtered=[x for x in all_list if x is not None]
-enjapan_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","従業員数","業種","職種","雇用形態"])
-enjapan_df.to_csv("enjapan_data_test_100.csv",encoding="utf-8-sig")
+enjapan_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","従業員数","従業員補足情報","業種","職種","雇用形態"])
+enjapan_df.to_csv("enjapan_data_test_100.csv",encoding="cp932",index=False)

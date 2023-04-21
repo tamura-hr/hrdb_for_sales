@@ -210,4 +210,4 @@ for n in tqdm(range(0,joblib_num)):
 
 all_list_filtered=[x for x in all_list if x is not None]
 ecareer_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","支店住所","従業員数","従業員補足情報","業種","職種","雇用形態"])
-ecareer_df.to_csv("ecareeer_data_test_100.csv",encoding="utf-8-sig",index=False)
+ecareer_df.to_csv("ecareeer_data_test_100.csv",encoding="cp932",index=False)
