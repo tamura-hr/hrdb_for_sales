@@ -46,7 +46,7 @@ def joblib_get_url_second(i):
 def joblib_get_data(i):
   new_list=list()
   #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-  media=houjin=shiten=houjin_addr=shiten_addr=members=members_etc=Industry=job_type=employee=" "
+  media=houjin=shiten=postcode=houjin_addr=shiten_addr=members=members_etc=Industry=job_type=employee=" "
 
   url=url_list_005[i]
   res=requests.get(url)
@@ -63,7 +63,7 @@ def joblib_get_data(i):
   except:
     pass
 
-  #支店名
+  #支店名 
 
   #法人住所　所在地
   for i in range(10):
@@ -74,6 +74,17 @@ def joblib_get_data(i):
         houjin_addr=raw_houjin_addr.split()
     except:
       pass
+
+  #郵便番号
+  for i in range(10):
+    try:
+      judge=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("th").get_text()
+      if "所在地" in judge:
+        raw_postcode=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("td").get_text()
+        raw_postcode=raw_postcode.replace("-","")
+        postcode=re.findall(r"\d+",raw_postcode)
+    except:
+      pass 
   
   #支店住所　勤務地
   for i in range(10):
@@ -137,6 +148,7 @@ def joblib_get_data(i):
 
   new_list.append(media)
   new_list.append(houjin[0])
+  new_list.append(postcode[0])
   new_list.append(houjin_addr[0])
   new_list.append(shiten_addr[0])
   new_list.append(members[0])
@@ -250,7 +262,7 @@ for n in tqdm(range(0,joblib_num)):
 all_list_filtered=[x for x in all_list if x is not None]
 
 
-doda_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","法人住所","支店住所","従業員数","従業員数補足情報","業種","職種","雇用形態"])
+doda_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","支店住所","従業員数","従業員数補足情報","業種","職種","雇用形態"])
 doda_df.to_csv("doda_data_test_100.csv",encoding="cp932",index=False)
 
 
