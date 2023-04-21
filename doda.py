@@ -82,7 +82,9 @@ def joblib_get_data(i):
       if "所在地" in judge:
         raw_postcode=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("td").get_text()
         raw_postcode=raw_postcode.replace("-","")
-        postcode=re.findall(r"\d+",raw_postcode)
+        raw_postcode=re.findall(r"\d+",raw_postcode)
+        if len(raw_postcode[0]) == 7:
+            postcode=raw_postcode
     except:
       pass 
   
@@ -263,7 +265,7 @@ all_list_filtered=[x for x in all_list if x is not None]
 
 
 doda_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","支店住所","従業員数","従業員数補足情報","業種","職種","雇用形態"])
-doda_df.to_csv("doda_data_test_100.csv",encoding="cp932",index=False)
+doda_df.to_csv("doda_data_test_100.csv",encoding="cp932",errors="ignore",index=False)
 
 
 '''

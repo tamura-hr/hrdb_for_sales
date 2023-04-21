@@ -175,7 +175,7 @@ for n in tqdm(range(0,joblib_num)):
 all_list_filtered=[x for x in all_list if x[1] is not None]
 
 toranet_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","従業員数","従業員補足情報","職種"])
-toranet_df.dropna(subset=["法人名"]).to_csv("tornet_data_test_100.csv",encoding="utf-8-sig",index=False)
+toranet_df.dropna(subset=["法人名"]).to_csv("tornet_data_test_100.csv",encoding="cp932",errors="ignore",index=False)
 
 
 """
