@@ -6,6 +6,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 def joblib_get_url(i):
       #iにはページ数
@@ -47,12 +48,15 @@ def joblib_get_url_second(i):
 def joblib_get_data(i):
   new_list=list()
   #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-  houjin=members=houjin_addr=members=Industry=job_type=" "
+  postcode=media=members_etc=houjin=members=houjin_addr=members=Industry=job_type=" "
 
   url=url_list_005[i]
   res=requests.get(url)
   res.encoding = res.apparent_encoding
   soup=BeautifulSoup(res.content,"html.parser")
+
+  #媒体名
+  media="rikunabi"
 
   #法人名
   for i in range(10):
@@ -63,16 +67,44 @@ def joblib_get_data(i):
            houjin=raw_houjin.split()
     except:
        pass
-
+  
   #従業員数
+    for i in range(10):
+      try:
+        judge=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("h3").get_text()
+        if "従業員数" in judge:
+            raw_members=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("p").get_text()
+            raw_members=raw_members.replace(",","")
+            members=re.findall(r"\d+",raw_members)
+      except:
+        pass
+
+  
+  #従業員補足情報
   for i in range(10):    
     try:
         juge=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("h3").get_text()
         if "従業員数" in juge:
-           raw_members=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("p").get_text()
-           members=raw_members.split()
+           raw_members_etc=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("p").get_text()
+           members_etc=raw_members_etc.split()
     except:
        pass 
+  #郵便番号
+  for i in range(10):    
+    try:
+        juge=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("h3").get_text()
+        if "事業所" in juge:
+           raw_postcode=soup.find("div",class_="rn3-companyOfferCompany").find_all("div",class_="rn3-companyOfferCompany__info")[i].find("p").get_text()
+           raw_postcode=raw_postcode.replace("-","")
+           raw_postcode=re.findall(r"\d+",raw_postcode)
+            
+           if len(raw_postcode[0]) == 7:
+                postcode=raw_postcode
+           else:
+              pass
+    except:
+       pass  
+      
   #法人住所
   for i in range(10):    
     try:
@@ -101,9 +133,12 @@ def joblib_get_data(i):
     except:
        pass
 
+  new_list.append(media)
   new_list.append(houjin[0])
+  new_list.append(postcode[0])
   new_list.append(houjin_addr)
   new_list.append(members[0])
+  new_list.append(members_etc[0])
   new_list.append(Industry[0])
   new_list.append(job_type)
 
@@ -208,9 +243,9 @@ for n in tqdm(range(0,joblib_num)):
 all_list_filtered=[x for x in all_list if x is not None]
 
 
-rikunabi_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","従業員数","業種","職種"])
+rikunabi_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","従業員数","従業員補足情報","業種","職種"])
 
-rikunabi_df.to_csv("rikunabi_data_test_100.csv",encoding="utf-8-sig")
+rikunabi_df.to_csv("rikunabi_data_test_100.csv",encoding="utf-8-sig",index=False)
 
 """
 #テスト用
