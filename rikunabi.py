@@ -245,7 +245,7 @@ all_list_filtered=[x for x in all_list if x is not None]
 
 rikunabi_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","従業員数","従業員補足情報","業種","職種"])
 
-rikunabi_df.to_csv("rikunabi_data_test_100.csv",encoding="utf-8-sig",index=False)
+rikunabi_df.to_csv("rikunabi_data_test_100.csv",encoding="cp932",index=False)
 
 """
 #テスト用
