@@ -5,6 +5,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 def joblib_get_url(i):
       #iにはページ数
@@ -24,7 +25,7 @@ def joblib_get_url(i):
 def joblib_get_data(i):
     new_list=list()
     #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-    houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+    postcode=media=members_etc=houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
 
     url=url_list_003[i]
     res=requests.get(url)
@@ -36,7 +37,8 @@ def joblib_get_data(i):
         try:
             juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
             if "会社名" in juge:
-                houjin=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                raw_houjin=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                houjin=raw_houjin
         except:
             pass
     #従業員数
@@ -44,7 +46,9 @@ def joblib_get_data(i):
         try:
             juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
             if "従業員数" in juge:
-                members=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                raw_members=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                raw_members=raw_members.replace(",","")
+                members=re.findall(r"\d+",raw_members)                
         except:
             pass
     #職種
@@ -52,13 +56,52 @@ def joblib_get_data(i):
         try:
             juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
             if "事業内容" in juge:
-                job_type=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                raw_job_type=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                job_type=raw_job_type.split()
         except:
             pass  
+    #媒体名
+    media="toranet"
+    #法人住所
+    for i in range(10):
+        try:
+            juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
+            if "所在住所" in juge:
+                raw_houjin_addr=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                houjin_addr=raw_houjin_addr
+        except:
+            pass
       
-    new_list.append(houjin)
-    new_list.append(members)
-    new_list.append(job_type)
+    #郵便番号
+    for i in range(10):
+        try:
+            juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
+            if "所在住所" in juge:
+                raw_postcode=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                raw_postcode=raw_postcode.replace("-","")
+                raw_postcode=re.findall(r"\d+",raw_postcode)
+                if len(raw_postcode[0]) == 7:
+                    postcode=raw_postcode
+                else:
+                    pass
+        except:
+            pass     
+    #従業員補足情報
+    for i in range(10):
+        try:
+            juge=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].get_text()
+            if "従業員数" in juge:
+                raw_members_etc=soup.find("td",class_="fs-m fh-l",colspan="2").find("div").find_all("span")[i].next_sibling.next_sibling.get_text()
+                members_etc=raw_members_etc.split()
+        except:
+            pass    
+    new_list.append(media)      
+    new_list.append(houjin.replace("\n","").replace(" ",""))
+    new_list.append(postcode[0])
+    new_list.append(houjin_addr.replace("\n","").replace(" ",""))
+    new_list.append(members[0])
+    new_list.append(members_etc[0])
+    new_list.append(job_type[0])
     
     return new_list
 
@@ -129,10 +172,10 @@ for n in tqdm(range(0,joblib_num)):
     except:
         pass
 
-all_list_filtered=[x for x in all_list if x[0] is not None]
+all_list_filtered=[x for x in all_list if x[1] is not None]
 
-toranet_df=pd.DataFrame(all_list_filtered,columns=["法人名","従業員数","職種"])
-toranet_df.to_csv("tornet_data_test_100.csv",encoding="utf-8-sig")
+toranet_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","従業員数","従業員補足情報","職種"])
+toranet_df.dropna(subset=["法人名"]).to_csv("tornet_data_test_100.csv",encoding="utf-8-sig",index=False)
 
 
 """
