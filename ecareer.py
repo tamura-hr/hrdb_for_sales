@@ -3,6 +3,7 @@ import requests
 import joblib
 from tqdm import tqdm
 import pandas as pd
+import re
 
 #ecareer
 
@@ -27,11 +28,14 @@ def joblib_get_url(i):
 def joblib_get_data(i):
     new_list=list()
     #法人名 支店名 法人住所 支店住所 従業員数 業種 職種 雇用形態
-    houjin=shiten=houjin_addr=shiten_addr=members=Industry=job_type=employee=" "
+    houjin=shiten=postcode=houjin_addr=shiten_addr=members=members_etc=Industry=job_type=employee=" "
 
     url=url_list_003[i]
     res=requests.get(url)
     soup=BeautifulSoup(res.text,"html.parser")
+
+    #媒体名
+    media="ecarer"
 
     #法人名
     for i in range(10):
@@ -43,6 +47,17 @@ def joblib_get_data(i):
       except:
         pass    
     
+    #郵便番号
+    for i in range(10):
+      try:
+        judge=soup.find("div",class_="corpInfo").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
+        if "所在地" in judge:
+            raw_postcode=soup.find("table",class_="corpDetail").find("tbody").find_all("tr")[i].find("td").get_text()
+            raw_postcode=raw_postcode.replace("-","")
+            postcode=re.findall(r"\d+",raw_postcode)
+      except:
+        pass 
+    
     #法人住所  
     for i in range(10):
       try:
@@ -52,14 +67,25 @@ def joblib_get_data(i):
             houjin_addr=raw_houjin_addr
       except:
         pass
-    
-    #従業員数
+
+  #従業員数　従業員数
     for i in range(10):
       try:
         judge=soup.find("div",class_="corpInfo").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
         if "従業員数" in judge:
             raw_members=soup.find("table",class_="corpDetail").find("tbody").find_all("tr")[i].find("td").get_text()
-            members=raw_members.split()
+            raw_members=raw_members.replace(",","")
+            members=re.findall(r"\d+",raw_members)
+      except:
+        pass
+
+    #従業員数補足情報
+    for i in range(10):
+      try:
+        judge=soup.find("div",class_="corpInfo").find("table").find("tbody").find_all("tr")[i].find("th").get_text()
+        if "従業員数" in judge:
+            raw_members_etc=soup.find("table",class_="corpDetail").find("tbody").find_all("tr")[i].find("td").get_text()
+            members_etc=raw_members_etc.split()
       except:
         pass
     
@@ -100,11 +126,13 @@ def joblib_get_data(i):
             shiten_addr=raw_shiten_addr
        except:
           pass    
-       
+    new_list.append(media)       
     new_list.append(houjin)
+    new_list.append(postcode[0])
     new_list.append(houjin_addr)
     new_list.append(shiten_addr)
-    new_list.append(members[0]+"人")
+    new_list.append(members[0])
+    new_list.append(members_etc[0])
     new_list.append(Industry[0])
     new_list.append(job_type)
     new_list.append(employee[0])
@@ -181,5 +209,5 @@ for n in tqdm(range(0,joblib_num)):
         pass
 
 all_list_filtered=[x for x in all_list if x is not None]
-ecareer_df=pd.DataFrame(all_list_filtered,columns=["法人名","法人住所","支店住所","従業員数","業種","職種","雇用形態"])
-ecareer_df.to_csv("ecareeer_data_test_100.csv",encoding="utf-8-sig")
+ecareer_df=pd.DataFrame(all_list_filtered,columns=["媒体名","法人名","郵便番号","法人住所","支店住所","従業員数","従業員補足情報","業種","職種","雇用形態"])
+ecareer_df.to_csv("ecareeer_data_test_100.csv",encoding="utf-8-sig",index=False)
