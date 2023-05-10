@@ -185,6 +185,7 @@ for i in range(2,total_page_num):
   url_key="https://doda.jp/DodaFront/View/JobSearchList.action?pic=1&ds=0&so=50&pf=0&tp=1&page="+str(i)
   url_list_001.append(url_key)
 
+#dddd
 
 url_list_002 = list()
 '''
