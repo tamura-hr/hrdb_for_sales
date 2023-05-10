@@ -104,7 +104,7 @@ def joblib_get_data(i):
       judge=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("th").get_text()
       if "従業員数" in judge:
         raw_members=soup.find("table",id="company_profile_table").find("tbody").find_all("tr")[i].find("td").get_text()
-        raw_members=raw_members.replace(",","")
+        raw_members=raw_members.replace(",","").replace("万","")
         members=re.findall(r"\d+",raw_members)
     except:
       pass
